@@ -1,12 +1,12 @@
 {
-  "name": "hwk2-payment-systems",
+  "name": "hwk5-shape-shop",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "YOUR NAME HERE",
+  "author": "Stephen Johnson",
   "license": "ISC",
   "dependencies": {
     "@types/node": "^6.0.58",
