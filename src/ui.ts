@@ -1,12 +1,9 @@
 //User Interface for The Shopping Cart 
-//@author James Church
+//@author Stephen Johnson
 
 import readlineSync = require('readline-sync'); //for easier repeated prompts
-import {Product} from './products';
-
-// Hey look. It's a global variable. This is totally cool, right?
-let shopping_cart: Product[] = [];
-let quantity_cart: number[] = [];
+import {Product, ShopModel} from './model';
+import {ShopView, PriceView, RemoveView, CartView} from './views';
 
 /**
  * Function to run the UI
@@ -19,6 +16,13 @@ export function start() {
  * The main menu. Will show until the user exits
  */
 function showMainMenu() {
+
+  let shopModel = new ShopModel([
+    new Product("Triangle", 3.5, "It's got three sides!"),
+    new Product("Square", 4.5, "It's got four sides!"),
+    new Product("Pentagon", 5.5, "It's got five sides!")
+  ]);
+
   while(true){ //run until we exit
     console.log(`Welcome to the Shape Store! We offer the best shapes! Pick an option:
   1. Add an item to the cart.
@@ -33,79 +37,92 @@ function showMainMenu() {
     }
 
     switch(response) { //handle each response
-      case '1': addItemToCart(); break;
-      case '2': removeItemFromCart(); break;
-      case '3': viewItemsInCart(); break;
-      case '4': viewCartTotal(); break;
+      case '1': addItemToCart(shopModel); break;
+      case '2': removeItemFromCart(shopModel); break;
+      case '3': viewItemsInCart(shopModel); break;
+      case '4': viewCartTotal(shopModel); break;
       default: console.log('Invalid option!');
     }
     console.log(''); //extra empty line for revisiting
   }
 }
 
-function addItemToCart() {
-    letUserSelectItem();
-    letUserSelectQuantity();
+/**
+ * Allows the user to select a product and add it to their cart.
+ * @param shopModel 
+ */
+function addItemToCart(shopModel: ShopModel) {
+  let shopView = new ShopView(shopModel);
+  shopView.buildView();
+  console.log(shopView.getView());
+
+  let response = readlineSync.question('> ');
+  let res = parseInt(response);
+  let count: number = 0;
+
+  if(res > shopModel.getProducts().length || res < 1 || isNaN(res)){ console.log("Invalid Option!"); }
+  else{ count = letUserSelectQuantity(); }
+  
+  shopModel.addToCount(res-1, count);
 }
 
-function letUserSelectItem() {
-    console.log(`Here you can select your shape. Pick an option:
-  1. Buy a Triangle!
-  2. Buy a Square!
-  3. Buy a Pentagon!
-  4. Go back. Don't buy anything.`);
+/**
+ * Lets users choose how many of a selected shape that they want
+ * @returns 
+ */
+function letUserSelectQuantity(): number {
+  console.log(`How many of this shape would you like to purchase?\n`);
 
-    let response = readlineSync.question('> ')
+  let response = readlineSync.question('> ')
+  let res = parseInt(response);
 
-    switch(response) { //handle each response
-      case '1': shopping_cart.push(new Product("Triangle", 3.5, "It's got three sides!")); break;
-      case '2': shopping_cart.push(new Product("Square", 4.5, "It's got four sides!")); break;
-      case '3': shopping_cart.push(new Product("Pentagon", 5.5, "It's got five sides!")); break;
-      default: console.log('Invalid option!');
+  if(isNaN(res) || res < 1){ res = 0; }
+
+  return res;
+}
+
+/**
+ * Removes a chosen item from the cart
+ * @param shopModel 
+ */
+function removeItemFromCart(shopModel: ShopModel) {
+  let removeView = new RemoveView(shopModel);
+  removeView.buildView();
+  console.log(removeView.getView());
+
+  let counts = shopModel.getCounts()
+
+  let response = readlineSync.question('> ');
+  let res = parseInt(response);
+  let cartCount = new Array<number>(0);
+
+  if(!isNaN(res) && res >= 0 && res < counts.length){
+    for(let i = 0; i < counts.length; i++){
+      if(counts[i] > 0){ cartCount.push(i); }
     }
-    console.log(''); //extra empty line for revisiting
+
+    res = cartCount[res];
+
+    shopModel.removeProduct(res);
+  }
 }
 
-function letUserSelectQuantity() {
-    console.log(`How many of this shape would you like to purchase?
-  `);
-
-    let response = readlineSync.question('> ')
-    quantity_cart.push(parseInt(response));
-    console.log(''); //extra empty line for revisiting
+/**
+ * Displays the items in the cart
+ * @param shopModel 
+ */
+function viewItemsInCart(shopModel: ShopModel) {
+  let cartView = new CartView(shopModel);
+  cartView.buildView();
+  console.log(cartView.getView());
 }
 
-function removeItemFromCart() {
-    console.log(`Select an item to be removed from the cart.
-  `);
-
-    for (let i = 0; i < shopping_cart.length; i++) {
-        console.log(i+": "+shopping_cart[i].getName());
-    }
-
-    let response = readlineSync.question('> ')
-    let toRemove = parseInt(response);
-
-    shopping_cart.splice(toRemove, 1);
-    quantity_cart.splice(toRemove, 1);
-
-    console.log(''); //extra empty line for revisiting
-}
-
-function viewItemsInCart() {
-    for (let i = 0; i < shopping_cart.length; i++) {
-        console.log("");
-        console.log("       Name: "+shopping_cart[i].getName());
-        console.log("      Price: "+shopping_cart[i].getPrice());
-        console.log("Description: "+shopping_cart[i].getDescription());
-        console.log("   Quantity: "+quantity_cart[i]);
-    }
-}
-
-function viewCartTotal() {
-    let total: number = 0;
-    for (let i = 0; i < shopping_cart.length; i++) {
-        total += shopping_cart[i].getPrice() * quantity_cart[i];
-    }
-    console.log("Shopping Cart Total: "+total);
+/**
+ * Displays the price total
+ * @param shopModel 
+ */
+function viewCartTotal(shopModel: ShopModel) {
+  let priceView = new PriceView(shopModel);
+  priceView.buildView();
+  console.log(priceView.getView());
 }
